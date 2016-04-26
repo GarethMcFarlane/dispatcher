@@ -61,7 +61,11 @@ PcbPtr suspendPcb(PcbPtr p)
     }
     else
     {
-        return NULL; /*** REPLACE THIS LINE WITH YOUR CODE ***/
+        if (kill(p->pid, SIGSTOP)) {
+        	fprintf(stderr, "ERROR: Unable to suspend PID %d", (int)p->pid);
+        	return NULL;
+        }
+        return p;
     }
 }
 
@@ -81,7 +85,11 @@ PcbPtr terminatePcb(PcbPtr p)
     }
     else
     {
-        return NULL; /*** REPLACE THIS LINE WITH YOUR CODE ***/
+        if (kill(p->pid,SIGINT)) {
+        	fprintf(stderr, "ERROR: Unable to terminate PID %d", (int)p->pid);
+        	return NULL;
+        }
+        return p;
     }
 }
 
@@ -100,8 +108,9 @@ PcbPtr printPcb(PcbPtr p)
     }
     else
     {
-        /*** WRITE YOUR CODE HERE ***/
-        return p;
+    	printf("Arrival time | Priority | CPU Time | Memory Allocated\n");
+    	printf("      %d      |     %d    |     %d    |          %d     \n", p->arrival_time, p->priority, p->remaining_cpu_time, p->mbytes);
+    	return p;
     }
 }
 
@@ -152,7 +161,20 @@ PcbPtr createnullPcb()
  ******************************************************/
 PcbPtr enqPcb(PcbPtr q, PcbPtr p)
 {
-    return NULL; /*** REPLACE THIS LINE WITH YOUR CODE ***/
+
+    if (!q) {
+    	q = p;
+    	q->next = NULL;
+    } else {
+    	PcbPtr current_proc = q;	//Temporary pointer to current process.
+    	//Loop until we get to the end of the queue.
+    	while(current_proc->next) {
+    		current_proc = current_proc->next;
+    	}
+    	//Add the process to the queue.
+    	current_proc->next = p;
+    }
+    return q;
 }
 
 /*******************************************************
@@ -166,7 +188,9 @@ PcbPtr enqPcb(PcbPtr q, PcbPtr p)
  *******************************************************/
 PcbPtr deqPcb(PcbPtr * hPtr)
 {
-    return NULL; /*** REPLACE THIS LINE WITH YOUR CODE ***/
+    PcbPtr head = *hPtr;
+    *hPtr = head->next;
+    return head;
 }
 
 /*** START OF SECTION MARKER ***/

@@ -45,6 +45,7 @@
 
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION PROTOTYPES MAY BE ADDED HERE ***/
+PcbPtr deq_hrrn_Pcb(PcbPtr *, int);
 /*** END OF SECTION MARKER ***/
 
 int main (int argc, char *argv[])
@@ -56,6 +57,7 @@ int main (int argc, char *argv[])
     PcbPtr input_queue = NULL;
     PcbPtr current_process = NULL;
     PcbPtr process = NULL;
+    PcbPtr HRRN = NULL;
     int timer = 0;
 
 /*** END OF SECTION MARKER ***/
@@ -89,6 +91,8 @@ int main (int argc, char *argv[])
           &(process->arrival_time), &(process->priority),
           &(process->scheduled_service_time), &(process->mbytes))) == 4)
         {
+            process->args[0] = "process";
+            process->args[1] = NULL;
             process->remaining_cpu_time = process->scheduled_service_time;
             process->status = PCB_INITIALIZED;
             input_queue = enqPcb(input_queue, process);
@@ -120,19 +124,25 @@ int main (int argc, char *argv[])
 
 //  2. Whenever there is a running process or the FCFS queue is not empty:
 
-    while (1) // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+
+
+    while (input_queue || current_process || HRRN) 
     {
+
+        while (input_queue && input_queue->arrival_time <= timer) {
+            HRRN = enqPcb(HRRN, deqPcb(&input_queue));
+        }
 //      i. If there is a currently running process;
-        if (1) // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+        if (current_process) 
         {
 //          a. Decrement the process's remaining_cpu_time variable;
-            puts("I am a duck."); // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+            current_process->remaining_cpu_time--;
             
 //          b. If the process's allocated time has expired:
-            if (1) // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+            if (current_process->remaining_cpu_time == 0) 
             {
 //              A. Terminate the process;
-                puts("I am a duck."); // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+                terminatePcb(current_process);
                 
 //              B. Deallocate the PCB (process control block)'s memory
                 free(current_process);
@@ -141,22 +151,25 @@ int main (int argc, char *argv[])
         }
 
 //      ii. If there is no running process and there is a process ready to run:
-        if (1) // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+        if (!current_process && HRRN)
         {
-//          Dequeue the process at the head of the queue, set it as currently running and start it
-            puts("Quack, quack!"); // REPLACE THIS LINE WITH YOUR CODE (AT LEAST TWO LINES)
+            current_process = startPcb(deq_hrrn_Pcb(&HRRN,timer));
+            //current_process = startPcb(deqPcb(&HRRN));
         }
         
 //      iii. Let the dispatcher sleep for one second;
-        printf("%d\n", timer); // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+        sleep(1);
         
 //      iv. Increment the dispatcher's timer;
-        break; // REPLACE THIS LINE WITH YOUR CODE (ONE LINE ONLY)
+        timer++;
         
 //      v. Go back to 4.
     }
     
 //  3. Terminate the HOST dispatcher
+
+
+
     exit(EXIT_SUCCESS);
 }
 
