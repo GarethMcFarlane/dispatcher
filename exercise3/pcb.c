@@ -66,6 +66,7 @@ PcbPtr suspendPcb(PcbPtr p)
         	return NULL;
         }
         waitpid(p->pid, NULL, WUNTRACED);
+        p->status = PCB_SUSPENDED;
         return p;
     }
 }
@@ -91,6 +92,7 @@ PcbPtr terminatePcb(PcbPtr p)
         	return NULL;
         }
         waitpid(p->pid, NULL, WUNTRACED);
+        p->status = PCB_TERMINATED;
         return p;
     }
 
@@ -226,8 +228,8 @@ PcbPtr deq_hrrn_Pcb(PcbPtr* queue_head_ptr, int timer) {
     //First, loop to find the highest ratio.
     while (process) {
         int remaining_cpu_time = process->remaining_cpu_time;
-        float waiting_time = (float)timer - (float)process->arrival_time;
-        float response_ratio = (waiting_time/remaining_cpu_time) + 1;
+        int waiting_time = timer - process->arrival_time - process->scheduled_service_time + process->remaining_cpu_time;
+        float response_ratio = (((float)waiting_time)/remaining_cpu_time) + 1;
         if (response_ratio > highest_response_ratio) {
             highest_process = process;
             highest_response_ratio = response_ratio;

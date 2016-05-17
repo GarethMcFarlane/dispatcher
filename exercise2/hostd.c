@@ -128,7 +128,7 @@ int main (int argc, char *argv[])
 
     while (input_queue || current_process || HRRN) 
     {
-
+        //printf("Dispatcher timer: %d\n",timer);
         while (input_queue && input_queue->arrival_time <= timer) {
             HRRN = enqPcb(HRRN, deqPcb(&input_queue));
         }
