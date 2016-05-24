@@ -42,10 +42,15 @@
 
 /* Include files */
 #include "hostd.h"
+#include "mab.h"
+
 
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION PROTOTYPES MAY BE ADDED HERE ***/
     PcbPtr deq_hrrn_Pcb(PcbPtr *, int);
+    MabPtr createMab();
+    //MabPtr memFree(PcbPtr *, PcbPtr);
+    int checkMemory(MabPtr *, int);
 /*** END OF SECTION MARKER ***/
 
     int main (int argc, char *argv[])
@@ -153,10 +158,10 @@
             }
 
 
-            while (user_queue) { //And memory can be allocated
+            while (user_queue && checkMemory(&mem,user_queue->mbytes)) {
                 PcbPtr user_deq = deqPcb(&user_queue);
                 user_deq->mem_block = memAlloc(&mem,user_deq->mbytes);
-                switch (&user_deq->priority) {
+                switch (user_deq->priority) {
                     case 1:   
                     priority_queue_1 = enqPcb(priority_queue_1, user_deq);
                     break;
@@ -181,6 +186,7 @@
 //              A. Terminate the process;
                     terminatePcb(current_process);
 //              B. Deallocate the PCB (process control block)'s memory
+                    memFree(&mem, current_process->mem_block);
                     free(current_process);
                     current_process = NULL;
 

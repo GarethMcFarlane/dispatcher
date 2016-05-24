@@ -8,7 +8,8 @@
 
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION PROTOTYPES MAY BE ADDED HERE ***/
-mabPtr createMab(void);
+MabPtr createMab();
+int checkMemory(MabPtr *, int);
 /*** END OF SECTION MARKER ***/
 
 /*******************************************************
@@ -37,7 +38,9 @@ MabPtr memAlloc(MabPtr * lists, int size)
  *******************************************************/
 MabPtr memFree(MabPtr * lists, MabPtr m)
 {
-    return NULL; /*** REPLACE THIS LINE WITH YOUR CODE ***/
+    m->allocated = 0;
+    //Try and recursively merge with buddy.
+    return NULL;
 }
 
 /*******************************************************
@@ -66,6 +69,7 @@ MabPtr memSplit(MabPtr * lists, MabPtr m, int size)
 	if (size > m->size/2) {
 		m->allocated = 1;
 		return m;
+	//Split into halves and call function again.  
 	} else {
 		MabPtr split = createMab();
 		m->size = m->size/2;
@@ -84,7 +88,7 @@ MabPtr memSplit(MabPtr * lists, MabPtr m, int size)
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION IMPLEMENTATIONS MAY BE ADDED HERE ***/
 
-MabPtr createMab(void) {
+MabPtr createMab() {
 	Mab newMab;
 	MabPtr newMabPtr = (MabPtr) malloc(sizeof(newMab));
 	newMabPtr->next = NULL;
@@ -96,6 +100,17 @@ MabPtr createMab(void) {
 	newMabPtr->allocated = 0;
 	newMabPtr->offset = 0;
 	return newMabPtr;
+}
+
+int checkMemory(MabPtr * lists, int size) {
+	MabPtr current = *lists;
+	while (current) {
+		if (size <= current->size && current->allocated == 0) {
+			return TRUE;
+		}
+		current = current->next;
+	}
+	return FALSE;
 }
 /*** END OF SECTION MARKER ***/
 /*** END OF CODE; DO NOT ADD MATERIAL BEYOND THIS POINT ***/

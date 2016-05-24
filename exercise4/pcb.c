@@ -3,6 +3,7 @@
 
 /* Include Files */
 #include "pcb.h"
+#include "mab.h"
 
 /*** CODE COMMENTS MAY BE ADDED BEYOND THIS POINT ***/
 
@@ -113,7 +114,8 @@ PcbPtr printPcb(PcbPtr p)
     }
     else
     {
-    	printf("      %d      |     %d    |     %d    |          %d     \n", p->arrival_time, p->priority, p->remaining_cpu_time, p->mbytes);
+        MabPtr memblock = p->mem_block;
+    	printf("%d |      %d       |     %d    |          %d             |         %d            |    %d     \n", (int)p->pid, p->arrival_time, p->priority, p->remaining_cpu_time, memblock->size, memblock->offset);
     	return p;
     }
 }
@@ -125,7 +127,7 @@ PcbPtr printPcb(PcbPtr p)
  ******************************************************/
 void printPcbHdr()
 {
-    printf("Arrival time | Priority | CPU Time | Memory Allocated\n");
+    printf("PID   | Arrival Time | Priority | Scheduled Running Time | Allocated Memory (MB) | Memory Offset (MB)\n");
 }
 
 /*******************************************************
