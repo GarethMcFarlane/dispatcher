@@ -70,8 +70,8 @@
 
     //Memory blocks
         
-       // MabPtr realtime_mem = memAlloc(lists,64);
-       // printTree(lists);
+        MabPtr realtime_mem = memAlloc(lists,64);
+
 
     //Input stream from file.
         FILE * input_list_stream = NULL;
@@ -155,7 +155,7 @@
 /*** YOU NEED TO WRITE YOUR OWN COMMENTS ***/
 
 //  2. Whenever there is a running process or the FCFS queue is not empty:
-        
+
         //Close the input file
         fclose(input_list_stream);
 
@@ -164,9 +164,9 @@
             while (input_queue && input_queue->arrival_time <= timer) {
                 PcbPtr deq_process = deqPcb(&input_queue);
 
-                if (deq_process->priority == 0) {
+                if (deq_process->priority == 0 && deq_process->mbytes <= 64) {
                     realtime_queue = enqPcb(realtime_queue,deq_process);
-                } else {
+                } else if (deq_process->priority > 0 && deq_process->priority < 4 && deq_process->mbytes <= 512) {
                     user_queue = enqPcb(user_queue,deq_process);
                 }
                 
@@ -204,39 +204,47 @@
 //              A. Terminate the process;
                     terminatePcb(current_process);
 //              B. Deallocate the PCB (process control block)'s memory
-                    memFree(lists, current_process->mem_block);
+                    if (current_process->priority > 0) {
+                        memFree(lists, current_process->mem_block);
+                    }
                     free(current_process);
                     current_process = NULL;
 
                 } else if (current_process->priority == 1){
                     current_process->priority = 2;
-                    if (priority_queue_1 || priority_queue_2) {
+                    if (priority_queue_1 || priority_queue_2 || realtime_queue) {
                         suspendPcb(current_process);
                         priority_queue_2 = enqPcb(priority_queue_2, current_process);
                         current_process = NULL;
                     }
                 } else if (current_process->priority == 2) {
                     current_process->priority = 3;
-                    if (priority_queue_1 || priority_queue_2 || priority_queue_3) {
+                    if (priority_queue_1 || priority_queue_2 || priority_queue_3 || realtime_queue) {
                         suspendPcb(current_process);
                         priority_queue_3 = enqPcb(priority_queue_3,current_process);
                         current_process = NULL;
                     }
-                } else if (priority_queue_1 || priority_queue_2) {
-                    suspendPcb(current_process);
-                    priority_queue_3 = enqPcb(priority_queue_3,current_process);
-                    current_process = NULL;
+                } else if (current_process->priority == 3) {
+                    if (priority_queue_1 || priority_queue_2 || realtime_queue) {
+                        suspendPcb(current_process);
+                        priority_queue_3 = enqPcb(priority_queue_3,current_process);
+                        current_process = NULL;
+                    }
                 }
             }
 
 
 //      ii. If there is no running process and there is a process ready to run:
-            int process_ready = priority_queue_1 || priority_queue_2 || priority_queue_3;
+            int process_ready = priority_queue_1 || priority_queue_2 || priority_queue_3 || realtime_queue;
             if (!current_process && process_ready)
             {
-                if (priority_queue_1) {
+            if (realtime_queue) {
+                current_process = deqPcb(&realtime_queue);
+                current_process->mem_block = realtime_mem;
+                startPcb(current_process);
+            } else if (priority_queue_1) {
                  current_process = startPcb(deqPcb(&priority_queue_1));
-             } else if (priority_queue_2) {
+            } else if (priority_queue_2) {
                 current_process = startPcb(deqPcb(&priority_queue_2));
             } else {
                 current_process = startPcb(deq_hrrn_Pcb(&priority_queue_3,timer));
