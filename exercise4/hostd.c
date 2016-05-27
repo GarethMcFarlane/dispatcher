@@ -48,9 +48,11 @@
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION PROTOTYPES MAY BE ADDED HERE ***/
     PcbPtr deq_hrrn_Pcb(PcbPtr *, int);
-    MabPtr createMab();
+    MabPtr createMab(int);
     //MabPtr memFree(PcbPtr *, PcbPtr);
     int checkMemory(MabPtr *, int);
+    int getOrder(int);
+    void printTree(MabPtr *);
 /*** END OF SECTION MARKER ***/
 
     int main (int argc, char *argv[])
@@ -58,8 +60,18 @@
     /*** START OF SECTION MARKER ***/
     /*** You may add variable declarations in this section. ***/
 
+    //MAB Linked Lists
+        
+        MabPtr * lists = (MabPtr *) malloc(11 * sizeof(MabPtr));
+        lists[0] = createMab(1024);
+        for (int i = 1; i < 11; ++i) {
+            lists[i] = NULL;
+        }
+
     //Memory blocks
-        MabPtr mem = createMab();
+        
+        MabPtr realtime_mem = memAlloc(lists,64);
+        printTree(lists);
 
     //Input stream from file.
         FILE * input_list_stream = NULL;
@@ -158,9 +170,11 @@
             }
 
 
-            while (user_queue && checkMemory(&mem,user_queue->mbytes)) {
+            //while (user_queue && checkMemory(lists,user_queue->mbytes)) {
+            while (user_queue && checkMemory(lists,user_queue->mbytes)) {
                 PcbPtr user_deq = deqPcb(&user_queue);
-                user_deq->mem_block = memAlloc(&mem,user_deq->mbytes);
+                user_deq->mem_block = memAlloc(lists,user_deq->mbytes);
+                printTree(lists);
                 switch (user_deq->priority) {
                     case 1:   
                     priority_queue_1 = enqPcb(priority_queue_1, user_deq);
@@ -186,7 +200,7 @@
 //              A. Terminate the process;
                     terminatePcb(current_process);
 //              B. Deallocate the PCB (process control block)'s memory
-                    memFree(&mem, current_process->mem_block);
+                    memFree(lists, current_process->mem_block);
                     free(current_process);
                     current_process = NULL;
 

@@ -8,8 +8,11 @@
 
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION PROTOTYPES MAY BE ADDED HERE ***/
-MabPtr createMab();
+MabPtr createMab(int);
 int checkMemory(MabPtr *, int);
+int getOrder(int);
+int addToList(MabPtr,MabPtr);
+void printTree(MabPtr *);
 /*** END OF SECTION MARKER ***/
 
 /*******************************************************
@@ -20,14 +23,29 @@ int checkMemory(MabPtr *, int);
  *******************************************************/
 MabPtr memAlloc(MabPtr * lists, int size)
 {
-	MabPtr currentMab = *lists;
+	//Get the order of the required size.
+	int order = getOrder(size);
+
+	//Search through the list and see if there are any free blocks.
+	//If there are, allocate them and return it.
+	MabPtr currentMab = lists[order];
 	while (currentMab) {
-		if (size <= currentMab->size && currentMab->allocated == 0) {
-			return memSplit(lists,currentMab,size);
+		if (currentMab->allocated == 0) {
+			currentMab->allocated = 1;
+			return currentMab;
 		}
 		currentMab = currentMab->next;
 	}
-    return NULL;
+
+	//If there are no free blocks, recursively go up a level until a free block is found.
+	currentMab = memAlloc(lists,size*2);
+
+	//Split the free Mab into two and get it's left child.
+	MabPtr allocedMab = memSplit(lists,currentMab,size);
+
+	//Return the allocated block.
+	return allocedMab;
+
 }
 
 /*******************************************************
@@ -38,9 +56,17 @@ MabPtr memAlloc(MabPtr * lists, int size)
  *******************************************************/
 MabPtr memFree(MabPtr * lists, MabPtr m)
 {
+
     m->allocated = 0;
-    //Try and recursively merge with buddy.
-    return NULL;
+    MabPtr result = memMerge(lists,m);
+
+    if (result == m->parent) {
+    	return memFree(lists,m->parent);
+    }
+    return result;
+
+
+
 }
 
 /*******************************************************
@@ -54,7 +80,15 @@ MabPtr memFree(MabPtr * lists, MabPtr m)
  *******************************************************/
 MabPtr memMerge(MabPtr * lists, MabPtr m)
 {
-    return NULL; /*** REPLACE THIS LINE WITH YOUR CODE ***/
+    MabPtr parent = m->parent;
+	MabPtr left_child = parent->left_child;
+	MabPtr right_child = parent->right_child;
+
+	if (right_child->allocated == 0 && left_child->allocated == 0) {
+		return parent;
+	}
+
+	return m;
 }
 
 /*******************************************************
@@ -65,30 +99,47 @@ MabPtr memMerge(MabPtr * lists, MabPtr m)
  *******************************************************/
 MabPtr memSplit(MabPtr * lists, MabPtr m, int size)
 {
-	//Base case:
-	if (size > m->size/2) {
-		m->allocated = 1;
-		return m;
-	//Split into halves and call function again.  
+
+	//Create left and right children.
+	MabPtr left = createMab(m->size/2);
+	MabPtr right = createMab(m->size/2);
+	//Adopt the children
+	m->left_child = left;
+	m->right_child = right;
+	//Children accept their new parents
+	left->parent = m;
+	right->parent = m;
+
+	//Assign next and prev.
+	left->next = right;
+	right->prev = left;
+
+	//Get the order of the child list.
+	int child_order = getOrder(m->size) + 1;
+
+	//If list is empty, start it.
+	if (!lists[child_order]) {
+		lists[child_order] = left;
+	//Else find the last Mab on the list and assign the left child to be the next one.
 	} else {
-		MabPtr split = createMab();
-		m->size = m->size/2;
-		split->offset = m->offset + m->size;
-		split->size = m->size;
-		split->next = m->next;
-		split->prev = m;
-		m->next = split;
-		if (split->next) {
-			split->next->prev = split;
+		MabPtr current = lists[child_order];
+		while (!current->next) {
+			current = current->next;
 		}
-		return memSplit(lists,m,size);
+		current->next = left;
 	}
+
+
+	//fprintf(stderr,"Split block of size %d into two blocks of size %d.\n", m->size, right->size);
+	//Allocate block and return.
+	left->allocated = 1;
+	return left;
 }
 
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION IMPLEMENTATIONS MAY BE ADDED HERE ***/
 
-MabPtr createMab() {
+MabPtr createMab(int size) {
 	Mab newMab;
 	MabPtr newMabPtr = (MabPtr) malloc(sizeof(newMab));
 	newMabPtr->next = NULL;
@@ -96,21 +147,92 @@ MabPtr createMab() {
 	newMabPtr->parent = NULL;
 	newMabPtr->left_child = NULL;
 	newMabPtr->right_child = NULL;
-	newMabPtr->size = MEMORY_SIZE;
+	newMabPtr->size = size;
 	newMabPtr->allocated = 0;
 	newMabPtr->offset = 0;
 	return newMabPtr;
 }
 
 int checkMemory(MabPtr * lists, int size) {
-	MabPtr current = *lists;
+	int order = getOrder(size);
+	MabPtr current = lists[order];
+
+	if (size > 512) {
+		return 0;
+	}
+
 	while (current) {
-		if (size <= current->size && current->allocated == 0) {
-			return TRUE;
+		if (current->allocated == 0) {
+			return 1;
 		}
 		current = current->next;
 	}
-	return FALSE;
+
+	return checkMemory(lists,size*2);
+}
+
+int getOrder(int size) {
+	if (size > 512) {
+		return 0;
+	}
+	if (size > 256) {
+		return 1;
+	}
+	if (size > 128) {
+		return 2;
+	}
+	if (size > 64) {
+		return 3;
+	}
+	if (size > 32) {
+		return 4;
+	}
+	if (size > 16) {
+		return 5;
+	}
+	if (size > 8) {
+		return 6;
+	}
+	if (size > 4) {
+		return 7;
+	}
+	if (size > 2) {
+		return 8;
+	}
+	if (size > 1) {
+		return 9;
+	}
+	return 10;
+}
+
+int addToList(MabPtr list, MabPtr item) {
+	MabPtr current = list;
+	if (!current) {
+		list = item;
+		return 0;
+	}
+
+	while(current->next) {
+		current = current->next;
+	}
+
+	current->next = item;
+	item->prev = current;
+	return 0;
+}
+
+
+void printTree(MabPtr *lists) {
+	for (int depth = 0; depth < 11; ++depth) {
+		fprintf(stderr,"Order %d\n", depth);
+		MabPtr current = lists[depth];
+		while (current) {
+			fprintf(stderr,"(Allocated: %d, Size: %d)    ",current->allocated, current->size);
+			current = current->next;
+		}
+		fprintf(stderr,"\n");
+	}
+	fprintf(stderr,"Tree print finished\n");
 }
 /*** END OF SECTION MARKER ***/
 /*** END OF CODE; DO NOT ADD MATERIAL BEYOND THIS POINT ***/
