@@ -80,6 +80,10 @@ MabPtr memFree(MabPtr * lists, MabPtr m)
  *******************************************************/
 MabPtr memMerge(MabPtr * lists, MabPtr m)
 {
+	//If we reach the last (1024) block.
+	if (!m->parent) {
+		return m;
+	}
     MabPtr parent = m->parent;
 	MabPtr left_child = parent->left_child;
 	MabPtr right_child = parent->right_child;
@@ -109,7 +113,9 @@ MabPtr memSplit(MabPtr * lists, MabPtr m, int size)
 	//Children accept their new parents
 	left->parent = m;
 	right->parent = m;
-
+	//Set offsets
+	left->offset = m->offset;
+	right->offset = left->offset + left->size;
 	//Assign next and prev.
 	left->next = right;
 	right->prev = left;
@@ -155,20 +161,17 @@ MabPtr createMab(int size) {
 
 int checkMemory(MabPtr * lists, int size) {
 	int order = getOrder(size);
-	MabPtr current = lists[order];
 
-	if (size > 512) {
-		return 0;
-	}
-
-	while (current) {
-		if (current->allocated == 0) {
-			return 1;
+	for (int i = order; i >= 0; --i) {
+		MabPtr currentlist = lists[i];
+		while (currentlist) {
+			if (currentlist->allocated == 0) {
+				return 1;
+			}
+			currentlist = currentlist->next;
 		}
-		current = current->next;
 	}
-
-	return checkMemory(lists,size*2);
+	return 0;
 }
 
 int getOrder(int size) {
@@ -223,16 +226,32 @@ int addToList(MabPtr list, MabPtr item) {
 
 
 void printTree(MabPtr *lists) {
-	for (int depth = 0; depth < 11; ++depth) {
-		fprintf(stderr,"Order %d\n", depth);
-		MabPtr current = lists[depth];
-		while (current) {
-			fprintf(stderr,"(Allocated: %d, Size: %d)    ",current->allocated, current->size);
-			current = current->next;
+	int maxwidth = 64;
+	int depth = 0;
+	while (depth < 6) {
+		//MabPtr currentlist = lists[depth];
+		int num = depth + 1;
+		int node_size = 60/num;
+
+		for (int j = 0; j < num; ++j) {
+			fprintf(stderr,"(");
+			for (int i = 0; i < (node_size-2)/2; ++i) {
+				fprintf(stderr," ");
+			}
+			fprintf(stderr,"|");
+			for (int i = 0; i < (node_size-2)/2; ++i) {
+				fprintf(stderr," ");
+			}
+			fprintf(stderr,")");
 		}
 		fprintf(stderr,"\n");
+		depth++;
 	}
-	fprintf(stderr,"Tree print finished\n");
+
 }
+
+
+			
+			
 /*** END OF SECTION MARKER ***/
 /*** END OF CODE; DO NOT ADD MATERIAL BEYOND THIS POINT ***/

@@ -70,8 +70,8 @@
 
     //Memory blocks
         
-        MabPtr realtime_mem = memAlloc(lists,64);
-        printTree(lists);
+       // MabPtr realtime_mem = memAlloc(lists,64);
+       // printTree(lists);
 
     //Input stream from file.
         FILE * input_list_stream = NULL;
@@ -144,6 +144,8 @@
                 break;
             }
         }
+
+
 /*** END OF SECTION MARKER ***/
 
 /*** START OF SECTION MARKER ***/
@@ -153,8 +155,9 @@
 /*** YOU NEED TO WRITE YOUR OWN COMMENTS ***/
 
 //  2. Whenever there is a running process or the FCFS queue is not empty:
-
-
+        
+        //Close the input file
+        fclose(input_list_stream);
 
         while (input_queue || user_queue || realtime_queue || current_process || priority_queue_1 || priority_queue_2 || priority_queue_3) 
         {
@@ -173,8 +176,9 @@
             //while (user_queue && checkMemory(lists,user_queue->mbytes)) {
             while (user_queue && checkMemory(lists,user_queue->mbytes)) {
                 PcbPtr user_deq = deqPcb(&user_queue);
+                //fprintf(stderr,"Allocating %d\n", user_deq->mbytes);
                 user_deq->mem_block = memAlloc(lists,user_deq->mbytes);
-                printTree(lists);
+                //printTree(lists);
                 switch (user_deq->priority) {
                     case 1:   
                     priority_queue_1 = enqPcb(priority_queue_1, user_deq);
