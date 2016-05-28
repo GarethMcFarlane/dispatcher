@@ -11,8 +11,6 @@
 MabPtr createMab(int);
 int checkMemory(MabPtr *, int);
 int getOrder(int);
-int addToList(MabPtr,MabPtr);
-void printTree(MabPtr *);
 /*** END OF SECTION MARKER ***/
 
 /*******************************************************
@@ -26,9 +24,10 @@ MabPtr memAlloc(MabPtr * lists, int size)
 	//Get the order of the required size.
 	int order = getOrder(size);
 
+	//Get the current list of free blocks of required size.
+	MabPtr currentMab = lists[order];
 	//Search through the list and see if there are any free blocks.
 	//If there are, allocate them and return it.
-	MabPtr currentMab = lists[order];
 	while (currentMab) {
 		if (currentMab->allocated == 0) {
 			currentMab->allocated = 1;
@@ -110,7 +109,7 @@ MabPtr memSplit(MabPtr * lists, MabPtr m, int size)
 	//Adopt the children
 	m->left_child = left;
 	m->right_child = right;
-	//Children accept their new parents
+	//Assign parents to children.
 	left->parent = m;
 	right->parent = m;
 	//Set offsets
@@ -135,8 +134,6 @@ MabPtr memSplit(MabPtr * lists, MabPtr m, int size)
 		current->next = left;
 	}
 
-
-	//fprintf(stderr,"Split block of size %d into two blocks of size %d.\n", m->size, right->size);
 	//Allocate block and return.
 	left->allocated = 1;
 	return left;
@@ -145,6 +142,13 @@ MabPtr memSplit(MabPtr * lists, MabPtr m, int size)
 /*** START OF SECTION MARKER ***/
 /*** ADDITIONAL FUNCTION IMPLEMENTATIONS MAY BE ADDED HERE ***/
 
+
+/*******************************************************
+ * MabPtr createMab (int size);
+ *    - Creates a Mab of required size.
+ *
+ * returns address of newly created Mab
+ *******************************************************/
 MabPtr createMab(int size) {
 	Mab newMab;
 	MabPtr newMabPtr = (MabPtr) malloc(sizeof(newMab));
@@ -159,9 +163,18 @@ MabPtr createMab(int size) {
 	return newMabPtr;
 }
 
+
+/*******************************************************
+ * int checkMemory(MabPtr * lists, int size);
+ *    - checks if it is possible to assign the requested
+ *      memory
+ *
+ * returns 1 if memory can be allocated or 0 if it can't
+ *******************************************************/
 int checkMemory(MabPtr * lists, int size) {
 	int order = getOrder(size);
 
+	//Starting at the requested size, check if there is a free Mab.
 	for (int i = order; i >= 0; --i) {
 		MabPtr currentlist = lists[i];
 		while (currentlist) {
@@ -170,10 +183,19 @@ int checkMemory(MabPtr * lists, int size) {
 			}
 			currentlist = currentlist->next;
 		}
+		//If not, iteratively check larger blocks.
 	}
+	//Return 0 if none were found.
 	return 0;
 }
 
+/*******************************************************
+ * int getOrder(int size);
+ *    - returns the index of the requested Mab size.
+ *    - Example: size 300 would correspond to lists[1]
+ *
+ * returns index of required size
+ *******************************************************/
 int getOrder(int size) {
 	if (size > 512) {
 		return 0;
@@ -208,47 +230,6 @@ int getOrder(int size) {
 	return 10;
 }
 
-int addToList(MabPtr list, MabPtr item) {
-	MabPtr current = list;
-	if (!current) {
-		list = item;
-		return 0;
-	}
-
-	while(current->next) {
-		current = current->next;
-	}
-
-	current->next = item;
-	item->prev = current;
-	return 0;
-}
-
-
-void printTree(MabPtr *lists) {
-	int maxwidth = 64;
-	int depth = 0;
-	while (depth < 6) {
-		//MabPtr currentlist = lists[depth];
-		int num = depth + 1;
-		int node_size = 60/num;
-
-		for (int j = 0; j < num; ++j) {
-			fprintf(stderr,"(");
-			for (int i = 0; i < (node_size-2)/2; ++i) {
-				fprintf(stderr," ");
-			}
-			fprintf(stderr,"|");
-			for (int i = 0; i < (node_size-2)/2; ++i) {
-				fprintf(stderr," ");
-			}
-			fprintf(stderr,")");
-		}
-		fprintf(stderr,"\n");
-		depth++;
-	}
-
-}
 
 
 			

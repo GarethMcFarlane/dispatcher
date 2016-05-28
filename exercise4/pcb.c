@@ -115,7 +115,7 @@ PcbPtr printPcb(PcbPtr p)
     else
     {
         MabPtr memblock = p->mem_block;
-    	printf("%d |      %d       |     %d    |          %d             |         %d            |    %d     \n", (int)p->pid, p->arrival_time, p->priority, p->remaining_cpu_time, memblock->size, memblock->offset);
+    	printf("%d |      %d       |     %d    |          %d             |         %d            |    %d     \n", (int)p->pid, p->arrival_time, p->priority, p->scheduled_service_time, memblock->size, memblock->offset);
     	return p;
     }
 }
@@ -219,6 +219,7 @@ PcbPtr deqPcb(PcbPtr * hPtr)
 
 PcbPtr deq_hrrn_Pcb(PcbPtr* queue_head_ptr, int timer) {
 
+    //If the queue is null, return NULL;
     if (!queue_head_ptr || !(*queue_head_ptr)) {
         return NULL;
     }
@@ -240,7 +241,7 @@ PcbPtr deq_hrrn_Pcb(PcbPtr* queue_head_ptr, int timer) {
 
 
     //If the element is at the start of the queue, dequeue it
-    //and set the list to it's next element (NULL).
+    //and set the list to it's next element.
     if (*queue_head_ptr == highest_process) {
         *queue_head_ptr = highest_process->next;
         return highest_process;
@@ -252,6 +253,7 @@ PcbPtr deq_hrrn_Pcb(PcbPtr* queue_head_ptr, int timer) {
     while (process->next != highest_process) {
         process = process->next;
     }
+    //'Skip' the dequeued process.
     process->next = highest_process->next;
 
     return highest_process;
